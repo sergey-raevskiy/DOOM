@@ -46,6 +46,8 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 static HWND g_MainWindow;
 static HWND g_MainWindowDC;
+static HBITMAP g_Bitmap;
+static HDC g_BitmapDC;
 //XXXColormap	X_cmap;
 //XXXVisual*		X_visual;
 //XXXGC		X_gc;
@@ -513,8 +515,6 @@ void I_FinishUpdate (void)
     }
 #endif
 
-	HDC hDC = g_MainWindowDC;
-
 	for (int y = 0; y < SCREENHEIGHT; y++)
 	{
 		byte *line = &screens[0][y * SCREENWIDTH];
@@ -524,10 +524,11 @@ void I_FinishUpdate (void)
 			byte pix = line[x];
 			COLORREF c = colors[pix];
 
-			SetPixel(hDC, x, y, c);
+			SetPixel(g_BitmapDC, x, y, c);
 		}
 	}
 
+	BitBlt(g_MainWindowDC, 0, 0, SCREENWIDTH, SCREENHEIGHT, g_BitmapDC, 0, 0, SRCCOPY);
 }
 
 
@@ -901,6 +902,9 @@ void I_InitGraphics(void)
 
 	g_MainWindow = GetConsoleWindow();
 	g_MainWindowDC = GetDC(g_MainWindow);
+    g_BitmapDC = CreateCompatibleDC(g_MainWindowDC);
+    g_Bitmap = CreateCompatibleBitmap(g_MainWindowDC, SCREENWIDTH, SCREENHEIGHT);
+	SelectObject(g_BitmapDC, g_Bitmap);
 }
 
 
