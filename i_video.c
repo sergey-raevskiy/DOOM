@@ -1,4 +1,3 @@
-#if 0
 // Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
@@ -26,28 +25,10 @@ static const char
 rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/keysym.h>
-
-#include <X11/extensions/XShm.h>
-// Had to dig up XShm.c for this one.
-// It is in the libXext, but not in the XFree86 headers.
-#ifdef LINUX
-int XShmGetEventBase( Display* dpy ); // problems with g++?
-#endif
 
 #include <stdarg.h>
-#include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 
-#include <netinet/in.h>
-#include <errnos.h>
 #include <signal.h>
 
 #include "doomstat.h"
@@ -58,24 +39,25 @@ int XShmGetEventBase( Display* dpy ); // problems with g++?
 
 #include "doomdef.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #define POINTER_WARP_COUNTDOWN	1
 
-Display*	X_display=0;
-Window		X_mainWindow;
-Colormap	X_cmap;
-Visual*		X_visual;
-GC		X_gc;
-XEvent		X_event;
+//XXXColormap	X_cmap;
+//XXXVisual*		X_visual;
+//XXXGC		X_gc;
+//XXXXEvent		X_event;
 int		X_screen;
-XVisualInfo	X_visualinfo;
-XImage*		image;
+//XXXXVisualInfo	X_visualinfo;
+//XXXXImage*		image;
 int		X_width;
 int		X_height;
 
 // MIT SHared Memory extension.
 boolean		doShm;
 
-XShmSegmentInfo	X_shminfo;
+//XXXXShmSegmentInfo	X_shminfo;
 int		X_shmeventtype;
 
 // Fake mouse handling.
@@ -97,6 +79,7 @@ static int	multiply=1;
 
 int xlatekey(void)
 {
+#if 0
 
     int rc;
 
@@ -160,10 +143,12 @@ int xlatekey(void)
 
     return rc;
 
+#endif
 }
 
 void I_ShutdownGraphics(void)
 {
+#if 0
   // Detach from X server
   if (!XShmDetach(X_display, &X_shminfo))
 	    I_Error("XShmDetach() failed in I_ShutdownGraphics()");
@@ -174,6 +159,7 @@ void I_ShutdownGraphics(void)
 
   // Paranoia.
   image->data = NULL;
+#endif
 }
 
 
@@ -194,7 +180,7 @@ boolean		shmFinished;
 
 void I_GetEvent(void)
 {
-
+#if 0
     event_t event;
 
     // put event-grabbing stuff in here
@@ -276,9 +262,10 @@ void I_GetEvent(void)
 	if (doShm && X_event.type == X_shmeventtype) shmFinished = true;
 	break;
     }
-
+#endif
 }
 
+#if 0
 Cursor
 createnullcursor
 ( Display*	display,
@@ -303,13 +290,14 @@ createnullcursor
     XFreeGC(display,gc);
     return cursor;
 }
+#endif
 
 //
 // I_StartTic
 //
 void I_StartTic (void)
 {
-
+#if 0
     if (!X_display)
 	return;
 
@@ -335,7 +323,7 @@ void I_StartTic (void)
     }
 
     mousemoved = false;
-
+#endif
 }
 
 
@@ -374,6 +362,7 @@ void I_FinishUpdate (void)
     
     }
 
+#if 0
     // scales the screen size before blitting it
     if (multiply == 2)
     {
@@ -518,6 +507,7 @@ void I_FinishUpdate (void)
 	XSync(X_display, False);
 
     }
+#endif
 
 }
 
@@ -534,6 +524,7 @@ void I_ReadScreen (byte* scr)
 //
 // Palette stuff.
 //
+#if 0
 static XColor	colors[256];
 
 void UploadNewPalette(Colormap cmap, byte *palette)
@@ -576,16 +567,20 @@ void UploadNewPalette(Colormap cmap, byte *palette)
 
 	}
 }
+#endif
 
 //
 // I_SetPalette
 //
 void I_SetPalette (byte* palette)
 {
+#if 0
     UploadNewPalette(X_cmap, palette);
+#endif
 }
 
 
+#if 0
 //
 // This function is probably redundant,
 //  if XShmDetach works properly.
@@ -689,10 +684,11 @@ void grabsharedmemory(int size)
   fprintf(stderr, "shared memory id=%d, addr=0x%x\n", id,
 	  (int) (image->data));
 }
+#endif
 
 void I_InitGraphics(void)
 {
-
+#if 0
     char*		displayname;
     char*		d;
     int			n;
@@ -912,6 +908,7 @@ void I_InitGraphics(void)
 	screens[0] = (unsigned char *) (image->data);
     else
 	screens[0] = (unsigned char *) malloc (SCREENWIDTH * SCREENHEIGHT);
+#endif
 
 }
 
@@ -1050,27 +1047,3 @@ Expand4
 
 
 
-#endif
-
-#include "i_video.h"
-
-// Called by D_DoomMain,
-// determines the hardware configuration
-// and sets up the video mode
-void I_InitGraphics(void) {}
-
-
-void I_ShutdownGraphics(void) {}
-
-// Takes full 8 bit values.
-void I_SetPalette(byte* palette) {}
-
-void I_UpdateNoBlit(void) {}
-void I_FinishUpdate(void) {}
-
-void I_ReadScreen(byte* scr) {}
-
-void I_StartFrame(void){}
-void I_EndFrame(void) {}
-
-void I_StartTic() {}
