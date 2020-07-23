@@ -528,7 +528,10 @@ void I_FinishUpdate (void)
 		}
 	}
 
-	BitBlt(g_MainWindowDC, 0, 0, SCREENWIDTH, SCREENHEIGHT, g_BitmapDC, 0, 0, SRCCOPY);
+    StretchBlt(g_MainWindowDC,
+               0, 0, X_width, X_height,
+               g_BitmapDC, 0, 0,
+               SCREENWIDTH, SCREENHEIGHT, SRCCOPY);
 }
 
 
@@ -678,7 +681,6 @@ void grabsharedmemory(int size)
 
 void I_InitGraphics(void)
 {
-#if 0
     char*		displayname;
     char*		d;
     int			n;
@@ -692,8 +694,6 @@ void I_InitGraphics(void)
     
     int			oktodraw;
     unsigned long	attribmask;
-    XSetWindowAttributes attribs;
-    XGCValues		xgcvalues;
     int			valuemask;
     static int		firsttime=1;
 
@@ -701,7 +701,7 @@ void I_InitGraphics(void)
 	return;
     firsttime = 0;
 
-    signal(SIGINT, (void (*)(int)) I_Quit);
+    //XXXsignal(SIGINT, (void (*)(int)) I_Quit);
 
     if (M_CheckParm("-2"))
 	multiply = 2;
@@ -743,6 +743,7 @@ void I_InitGraphics(void)
 	    I_Error("bad -geom parameter");
     }
 
+#if 0
     // open the display
     X_display = XOpenDisplay(displayname);
     if (!X_display)
