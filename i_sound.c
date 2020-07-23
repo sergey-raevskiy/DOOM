@@ -58,6 +58,12 @@ rcsid[] = "$Id: i_unix.c,v 1.5 1997/02/03 22:45:10 b1 Exp $";
 
 #include "doomdef.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <mmeapi.h>
+
+#pragma comment(lib, "winmm.lib")
+
 // UNIX hack, to be removed.
 #ifdef SNDSERV
 // Separate sound server process.
@@ -103,7 +109,10 @@ static int flag = 0;
 int 		lengths[NUMSFX];
 
 // The actual output device.
-int	audio_fd;
+static HWAVEOUT g_hWaveOut;
+static WAVEFORMAT *g_pWaveFormat;
+static WAVEHDR g_WaveHeader;
+static HANDLE g_hWaveEvent;
 
 // The global mixing buffer.
 // Basically, samples from all active internal channels
@@ -330,7 +339,7 @@ addsfx
     // Set pointer to raw data.
     channels[slot] = (unsigned char *) S_sfx[sfxid].data;
     // Set pointer to end of raw data.
-    channelsend[slot] = channels[slot] + lengths[sfxid];
+    channelsend[slot] = channels[slot] + W_LumpLength(S_sfx[sfxid].lumpnum);
 
     // Reset current handle number, limited to 0..100.
     if (!handlenums)
@@ -667,7 +676,29 @@ void
 I_SubmitSound(void)
 {
   // Write it to DSP device.
-  //XXXwrite(audio_fd, mixbuffer, SAMPLECOUNT*BUFMUL);
+    MMRESULT rc;
+
+    if (!flag)
+        return;
+
+    if (!g_hWaveOut)
+        return;
+
+    rc = waveOutWrite(g_hWaveOut, &g_WaveHeader, sizeof(g_WaveHeader));
+    if (rc)
+    {
+        fprintf(stderr, "I_SubmitSound: waveOutWrite() failed with error code %d\n", rc);
+        waveOutClose(g_hWaveOut);
+        g_hWaveOut = NULL;
+        return;
+    }
+
+    //while (g_WaveHeader.dwFlags)
+    //{
+    //    WaitForSingleObject(g_hWaveEvent, INFINITE);
+    //}
+
+    flag = 0;
 }
 
 
@@ -723,7 +754,7 @@ void I_ShutdownSound(void)
 #endif
   
   // Cleaning up -releasing the DSP device.
-  close ( audio_fd );
+  waveOutClose(g_hWaveOut);
 #endif
 
   // Done.
@@ -738,7 +769,62 @@ void I_ShutdownSound(void)
 void
 I_InitSound()
 { 
+    MMRESULT rc;
+    WAVEFORMATEX format;
 
+    g_hWaveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (!g_hWaveEvent)
+    {
+        fprintf(stderr, "I_InitSound: CreateEvent() failed: return code %d\n", GetLastError());
+        g_hWaveOut = NULL;
+        return;
+    }
+
+    memset(&format, 0, sizeof(format));
+    format.cbSize = sizeof(format);
+    format.wFormatTag = WAVE_FORMAT_PCM;
+    format.nChannels = 2;
+    format.nSamplesPerSec = SAMPLERATE;
+    format.nAvgBytesPerSec = SAMPLERATE * SAMPLESIZE;
+    format.nBlockAlign = 4;
+    format.wBitsPerSample = SAMPLESIZE * 8;
+    format.cbSize = 0;
+    g_pWaveFormat = &format;
+
+    rc = waveOutOpen((LPHWAVEOUT) &g_hWaveOut, WAVE_MAPPER,
+                     (LPWAVEFORMAT) g_pWaveFormat,
+                     g_hWaveEvent, 0L, CALLBACK_EVENT);
+
+    if (rc)
+    {
+        fprintf(stderr, "I_InitSound: waveOutOpen() failed: return code %d\n", rc);
+        g_hWaveOut = NULL;
+        return;
+    }
+
+    rc = waveOutSetVolume(g_hWaveOut, 0xFFFF);
+    if (rc)
+    {
+        fprintf(stderr, "I_InitSound: waveOutSetVolume() failed with error code %d\n", rc);
+        waveOutClose(g_hWaveOut);
+        g_hWaveOut = NULL;
+        return;
+    }
+
+    memset(&g_WaveHeader, 0, sizeof(g_WaveHeader));
+    g_WaveHeader.lpData = mixbuffer;
+    g_WaveHeader.dwBufferLength = sizeof(mixbuffer);
+    g_WaveHeader.dwFlags = 0L;
+    g_WaveHeader.dwLoops = 0L;
+
+    rc = waveOutPrepareHeader(g_hWaveOut, &g_WaveHeader, sizeof(g_WaveHeader));
+    if (rc)
+    {
+        fprintf(stderr, "I_InitSound: waveOutPrepareHeader() failed with error code %d\n", rc);
+        waveOutClose(g_hWaveOut);
+        g_hWaveOut = NULL;
+        return;
+    }
 }
 
 
@@ -842,6 +928,8 @@ void I_HandleSoundTimer( int ignore )
     // See I_SubmitSound().
     // Write it to DSP device.
     //XXXwrite(audio_fd, mixbuffer, SAMPLECOUNT*BUFMUL);
+
+      I_SubmitSound();
 
     // Reset flag counter.
     flag = 0;

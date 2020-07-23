@@ -400,10 +400,10 @@ void D_DoomLoop (void)
 	I_UpdateSound();
 #endif	
 	// Synchronous sound output is explicitly called.
-#ifndef SNDINTR
+//XXX#ifndef SNDINTR
 	// Update sound output.
 	I_SubmitSound();
-#endif
+//XXX#endif
     }
 }
 
