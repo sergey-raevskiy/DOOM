@@ -501,23 +501,48 @@ void I_FinishUpdate (void)
     }
 #endif
 
+	static BYTE buf[SCREENHEIGHT * SCREENWIDTH * 3];
+
 	for (int y = 0; y < SCREENHEIGHT; y++)
 	{
-		byte *line = &screens[0][y * SCREENWIDTH];
+		byte *srcline = &screens[0][y * SCREENWIDTH];
+		BYTE *dstline = &buf[y * SCREENWIDTH * 3];
 
 		for (int x = 0; x < SCREENWIDTH; x++)
 		{
-			byte pix = line[x];
+			byte pix = srcline[x];
 			COLORREF c = colors[pix];
-
-			SetPixel(g_BitmapDC, x, y, c);
+			dstline[x * 3 + 0] = (c >> 16) & 0xff;
+			dstline[x * 3 + 1] = (c >> 8) & 0xff;
+			dstline[x * 3 + 2] = (c >> 0) & 0xff;
 		}
 	}
 
+	// create bitmap
+	{
+		BITMAPINFO BmpInfo;
+
+		BmpInfo.bmiHeader.biSize = sizeof(BmpInfo.bmiHeader);
+		BmpInfo.bmiHeader.biWidth = SCREENWIDTH;
+		BmpInfo.bmiHeader.biHeight = 0 - SCREENHEIGHT;
+		BmpInfo.bmiHeader.biPlanes = 1;
+		BmpInfo.bmiHeader.biBitCount = 24;
+		BmpInfo.bmiHeader.biCompression = BI_RGB;
+		BmpInfo.bmiHeader.biSizeImage = 0;
+		BmpInfo.bmiHeader.biXPelsPerMeter = 0;
+		BmpInfo.bmiHeader.biYPelsPerMeter = 0;
+		BmpInfo.bmiHeader.biClrUsed = 0;
+		BmpInfo.bmiHeader.biClrImportant = 0;
+
+		SetDIBits(g_BitmapDC, g_Bitmap, 0, SCREENHEIGHT, buf, &BmpInfo, DIB_RGB_COLORS);
+	}
+
+    HBITMAP old = SelectObject(g_BitmapDC, g_Bitmap);
     StretchBlt(g_MainWindowDC,
                0, 0, X_width, X_height,
                g_BitmapDC, 0, 0,
                SCREENWIDTH, SCREENHEIGHT, SRCCOPY);
+	SelectObject(g_BitmapDC, old);
 }
 
 
@@ -891,7 +916,6 @@ void I_InitGraphics(void)
 	g_MainWindowDC = GetDC(g_MainWindow);
     g_BitmapDC = CreateCompatibleDC(g_MainWindowDC);
     g_Bitmap = CreateCompatibleBitmap(g_MainWindowDC, SCREENWIDTH, SCREENHEIGHT);
-	SelectObject(g_BitmapDC, g_Bitmap);
 }
 
 
