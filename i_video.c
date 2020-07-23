@@ -51,7 +51,7 @@ static HDC g_BitmapDC;
 //XXXColormap	X_cmap;
 //XXXVisual*		X_visual;
 //XXXGC		X_gc;
-//XXXXEvent		X_event;
+static INPUT_RECORD		X_Event;
 int		X_screen;
 //XXXXVisualInfo	X_visualinfo;
 //XXXXImage*		image;
@@ -85,63 +85,54 @@ static COLORREF	colors[256];
 
 int xlatekey(void)
 {
-#if 0
-
     int rc;
 
-    switch(rc = XKeycodeToKeysym(X_display, X_event.xkey.keycode, 0))
+    switch(rc = X_Event.Event.KeyEvent.wVirtualKeyCode)
     {
-      case XK_Left:	rc = KEY_LEFTARROW;	break;
-      case XK_Right:	rc = KEY_RIGHTARROW;	break;
-      case XK_Down:	rc = KEY_DOWNARROW;	break;
-      case XK_Up:	rc = KEY_UPARROW;	break;
-      case XK_Escape:	rc = KEY_ESCAPE;	break;
-      case XK_Return:	rc = KEY_ENTER;		break;
-      case XK_Tab:	rc = KEY_TAB;		break;
-      case XK_F1:	rc = KEY_F1;		break;
-      case XK_F2:	rc = KEY_F2;		break;
-      case XK_F3:	rc = KEY_F3;		break;
-      case XK_F4:	rc = KEY_F4;		break;
-      case XK_F5:	rc = KEY_F5;		break;
-      case XK_F6:	rc = KEY_F6;		break;
-      case XK_F7:	rc = KEY_F7;		break;
-      case XK_F8:	rc = KEY_F8;		break;
-      case XK_F9:	rc = KEY_F9;		break;
-      case XK_F10:	rc = KEY_F10;		break;
-      case XK_F11:	rc = KEY_F11;		break;
-      case XK_F12:	rc = KEY_F12;		break;
+      case VK_LEFT:	rc = KEY_LEFTARROW;	break;
+      case VK_RIGHT:	rc = KEY_RIGHTARROW;	break;
+      case VK_DOWN:	rc = KEY_DOWNARROW;	break;
+      case VK_UP:	rc = KEY_UPARROW;	break;
+      case VK_ESCAPE:	rc = KEY_ESCAPE;	break;
+      case VK_RETURN:	rc = KEY_ENTER;		break;
+      case VK_TAB:	rc = KEY_TAB;		break;
+      case VK_F1:	rc = KEY_F1;		break;
+      case VK_F2:	rc = KEY_F2;		break;
+      case VK_F3:	rc = KEY_F3;		break;
+      case VK_F4:	rc = KEY_F4;		break;
+      case VK_F5:	rc = KEY_F5;		break;
+      case VK_F6:	rc = KEY_F6;		break;
+      case VK_F7:	rc = KEY_F7;		break;
+      case VK_F8:	rc = KEY_F8;		break;
+      case VK_F9:	rc = KEY_F9;		break;
+      case VK_F10:	rc = KEY_F10;		break;
+      case VK_F11:	rc = KEY_F11;		break;
+      case VK_F12:	rc = KEY_F12;		break;
 	
-      case XK_BackSpace:
-      case XK_Delete:	rc = KEY_BACKSPACE;	break;
+      case VK_BACK:
+      case VK_DELETE:	rc = KEY_BACKSPACE;	break;
 
-      case XK_Pause:	rc = KEY_PAUSE;		break;
+      case VK_PAUSE:	rc = KEY_PAUSE;		break;
 
-      case XK_KP_Equal:
-      case XK_equal:	rc = KEY_EQUALS;	break;
+      case VK_OEM_PLUS:	rc = KEY_EQUALS;	break;
 
-      case XK_KP_Subtract:
-      case XK_minus:	rc = KEY_MINUS;		break;
+      case VK_OEM_MINUS:	rc = KEY_MINUS;		break;
 
-      case XK_Shift_L:
-      case XK_Shift_R:
+      case VK_SHIFT:
 	rc = KEY_RSHIFT;
 	break;
 	
-      case XK_Control_L:
-      case XK_Control_R:
+      case VK_CONTROL:
 	rc = KEY_RCTRL;
 	break;
 	
-      case XK_Alt_L:
-      case XK_Meta_L:
-      case XK_Alt_R:
-      case XK_Meta_R:
+      case VK_MENU:
+      case VK_LWIN:
+      case VK_RWIN:
 	rc = KEY_RALT;
 	break;
 	
       default:
-	if (rc >= XK_space && rc <= XK_asciitilde)
-	    rc = rc - XK_space + ' ';
 	if (rc >= 'A' && rc <= 'Z')
 	    rc = rc - 'A' + 'a';
 	break;
@@ -149,7 +140,6 @@ int xlatekey(void)
 
     return rc;
 
-#endif
 }
 
 void I_ShutdownGraphics(void)
@@ -186,25 +176,17 @@ boolean		shmFinished;
 
 void I_GetEvent(void)
 {
-#if 0
     event_t event;
 
     // put event-grabbing stuff in here
-    XNextEvent(X_display, &X_event);
-    switch (X_event.type)
+    switch (X_Event.EventType)
     {
-      case KeyPress:
-	event.type = ev_keydown;
+      case KEY_EVENT:
+	event.type = X_Event.Event.KeyEvent.bKeyDown ? ev_keydown : ev_keyup;
 	event.data1 = xlatekey();
 	D_PostEvent(&event);
-	// fprintf(stderr, "k");
 	break;
-      case KeyRelease:
-	event.type = ev_keyup;
-	event.data1 = xlatekey();
-	D_PostEvent(&event);
-	// fprintf(stderr, "ku");
-	break;
+#if 0
       case ButtonPress:
 	event.type = ev_mouse;
 	event.data1 =
@@ -263,12 +245,12 @@ void I_GetEvent(void)
       case Expose:
       case ConfigureNotify:
 	break;
+#endif
 	
       default:
-	if (doShm && X_event.type == X_shmeventtype) shmFinished = true;
+	//XXXif (doShm && X_event.type == X_shmeventtype) shmFinished = true;
 	break;
     }
-#endif
 }
 
 #if 0
@@ -303,12 +285,17 @@ createnullcursor
 //
 void I_StartTic (void)
 {
-#if 0
-    if (!X_display)
-	return;
+	while (1)
+	{
+		DWORD count;
 
-    while (XPending(X_display))
-	I_GetEvent();
+		PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &X_Event, 1, &count);
+		if (count != 1)
+			break;
+
+		ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &X_Event, 1, &count);
+		I_GetEvent();
+	}
 
     // Warp the pointer back to the middle of the window
     //  or it will wander off - that is, the game will
@@ -317,19 +304,18 @@ void I_StartTic (void)
     {
 	if (!--doPointerWarp)
 	{
-	    XWarpPointer( X_display,
-			  None,
-			  X_mainWindow,
-			  0, 0,
-			  0, 0,
-			  X_width/2, X_height/2);
-
-	    doPointerWarp = POINTER_WARP_COUNTDOWN;
+	    //XXXXWarpPointer( X_display,
+		//XXX	  None,
+		//XXX	  X_mainWindow,
+		//XXX	  0, 0,
+		//XXX	  0, 0,
+		//XXX	  X_width/2, X_height/2);
+		//XXX
+	    //XXXdoPointerWarp = POINTER_WARP_COUNTDOWN;
 	}
     }
 
     mousemoved = false;
-#endif
 }
 
 
