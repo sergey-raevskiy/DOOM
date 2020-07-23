@@ -74,6 +74,8 @@ int		doPointerWarp = POINTER_WARP_COUNTDOWN;
 // to use ....
 static int	multiply=1;
 
+// Current palette
+static COLORREF	colors[256];
 
 //
 //  Translates the key currently in X_event
@@ -520,8 +522,9 @@ void I_FinishUpdate (void)
 		for (int x = 0; x < SCREENWIDTH; x++)
 		{
 			byte pix = line[x];
+			COLORREF c = colors[pix];
 
-			SetPixel(hDC, x, y, RGB(pix, pix, pix));
+			SetPixel(hDC, x, y, c);
 		}
 	}
 
@@ -540,59 +543,29 @@ void I_ReadScreen (byte* scr)
 //
 // Palette stuff.
 //
-#if 0
-static XColor	colors[256];
 
-void UploadNewPalette(Colormap cmap, byte *palette)
+void UploadNewPalette(byte *palette)
 {
 
     register int	i;
-    register int	c;
-    static boolean	firstcall = true;
-
-#ifdef __cplusplus
-    if (X_visualinfo.c_class == PseudoColor && X_visualinfo.depth == 8)
-#else
-    if (X_visualinfo.class == PseudoColor && X_visualinfo.depth == 8)
-#endif
-	{
-	    // initialize the colormap
-	    if (firstcall)
-	    {
-		firstcall = false;
-		for (i=0 ; i<256 ; i++)
-		{
-		    colors[i].pixel = i;
-		    colors[i].flags = DoRed|DoGreen|DoBlue;
-		}
-	    }
+	byte r, g, b;
 
 	    // set the X colormap entries
 	    for (i=0 ; i<256 ; i++)
 	    {
-		c = gammatable[usegamma][*palette++];
-		colors[i].red = (c<<8) + c;
-		c = gammatable[usegamma][*palette++];
-		colors[i].green = (c<<8) + c;
-		c = gammatable[usegamma][*palette++];
-		colors[i].blue = (c<<8) + c;
+		r = gammatable[usegamma][*palette++];
+		g = gammatable[usegamma][*palette++];
+		b = gammatable[usegamma][*palette++];
+		colors[i] = RGB(r, g, b);
 	    }
-
-	    // store the colors to the current colormap
-	    XStoreColors(X_display, cmap, colors, 256);
-
-	}
 }
-#endif
 
 //
 // I_SetPalette
 //
 void I_SetPalette (byte* palette)
 {
-#if 0
-    UploadNewPalette(X_cmap, palette);
-#endif
+    UploadNewPalette(palette);
 }
 
 
