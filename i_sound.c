@@ -805,7 +805,7 @@ I_InitSound()
         return;
     }
 
-    rc = waveOutSetVolume(g_hWaveOut, 0xFFFF);
+    rc = waveOutSetVolume(g_hWaveOut, 0xFFFFFFFF);
     if (rc)
     {
         fprintf(stderr, "I_InitSound: waveOutSetVolume() failed with error code %d\n", rc);
