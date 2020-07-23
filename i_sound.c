@@ -684,6 +684,9 @@ I_SubmitSound(void)
     if (!g_hWaveOut)
         return;
 
+    WaitForSingleObject(g_hWaveEvent, INFINITE);
+    ResetEvent(g_hWaveEvent);
+
     rc = waveOutWrite(g_hWaveOut, &g_WaveHeader, sizeof(g_WaveHeader));
     if (rc)
     {
