@@ -30,16 +30,17 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 #define	BGCOLOR		7
 #define	FGCOLOR		8
 
-
-#ifdef NORMALUNIX
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#endif
+#include <io.h>
+#include <direct.h>
 
+#define access _access
+#define mkdir(p, m) _mkdir(p)
+#define R_OK 04
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -572,7 +573,7 @@ void IdentifyVersion (void)
     char*	plutoniawad;
     char*	tntwad;
 
-#ifdef NORMALUNIX
+#if 1
     char *home;
     char *doomwaddir;
     doomwaddir = getenv("DOOMWADDIR");
@@ -610,7 +611,8 @@ void IdentifyVersion (void)
 
     home = getenv("HOME");
     if (!home)
-      I_Error("Please set $HOME to your home directory");
+      //XXXI_Error("Please set $HOME to your home directory");
+		home = ".";
     sprintf(basedefault, "%s/.doomrc", home);
 #endif
 
