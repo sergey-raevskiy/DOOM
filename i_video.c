@@ -44,6 +44,8 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #define POINTER_WARP_COUNTDOWN	1
 
+static HWND g_MainWindow;
+static HWND g_MainWindowDC;
 //XXXColormap	X_cmap;
 //XXXVisual*		X_visual;
 //XXXGC		X_gc;
@@ -509,6 +511,20 @@ void I_FinishUpdate (void)
     }
 #endif
 
+	HDC hDC = g_MainWindowDC;
+
+	for (int y = 0; y < SCREENHEIGHT; y++)
+	{
+		byte *line = &screens[0][y * SCREENWIDTH];
+
+		for (int x = 0; x < SCREENWIDTH; x++)
+		{
+			byte pix = line[x];
+
+			SetPixel(hDC, x, y, RGB(pix, pix, pix));
+		}
+	}
+
 }
 
 
@@ -910,6 +926,8 @@ void I_InitGraphics(void)
 	screens[0] = (unsigned char *) malloc (SCREENWIDTH * SCREENHEIGHT);
 #endif
 
+	g_MainWindow = GetConsoleWindow();
+	g_MainWindowDC = GetDC(g_MainWindow);
 }
 
 
