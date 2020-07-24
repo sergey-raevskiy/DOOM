@@ -654,7 +654,7 @@ void I_UpdateSound( void )
     
     if ( misses > 10 )
     {
-      //fprintf( stderr, "I_SoundUpdate: missed 10 buffer writes\n");
+      fprintf( stderr, "I_SoundUpdate: missed 10 buffer writes\n");
       misses = 0;
     }
     
