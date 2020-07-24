@@ -211,7 +211,7 @@ static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
 	memset(&ev, 0, sizeof(ev));
 	ev.dwDeltaTime = 0;
 	ev.dwStreamID = 0;
-	ev.dwEvent = 0x0107a120;
+	ev.dwEvent = (0x01000000) | (60000000ULL/360);
 	MembufPush(out, &ev, 12);
 	
 
