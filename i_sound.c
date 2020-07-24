@@ -921,36 +921,70 @@ void I_UnRegisterSong(int handle)
 
 static MIDIHDR midihdr = { 0 };
 
+
+typedef struct {
+	byte *data;
+	int len;
+	int nalloc;
+} Membuf;
+
+static void MembufInit(Membuf *buf, int prep)
+{
+	buf->data = malloc(prep);
+	buf->len = 0;
+	buf->nalloc = prep;
+}
+
+static void MembufPush(Membuf *buf, const byte *data, int len)
+{
+	int req = buf->len + len;
+	if (req > buf->nalloc)
+	{
+		buf->data = realloc(buf->data, buf->nalloc * 2);
+		buf->nalloc *= 2;
+	}
+
+	memcpy(&buf->data[buf->len], data, len);
+	buf->len += len;
+}
+
+static void MembufFree(Membuf *buf)
+{
+	free(buf->data);
+	buf->data = NULL;
+}
+
+void MusCallback(MIDIEVENT *ev, void *context)
+{
+	Membuf *buf = context;
+	MembufPush(buf, ev, 12);
+}
+
 int I_RegisterSong(void* data)
 {
-	const byte *midi;
-	int midi_len;
-	if (I_Mus2Midi((const byte *)data, &midi, &midi_len))
+	Membuf buf;
+
+	MembufInit(&buf, 32);
+
+	if (!I_MusRunMidiEvents((const byte *)data, MusCallback, &buf))
 	{
-		//midi = (byte *) myNotes;
-		//midi_len = sizeof(myNotes);
-
-		//if (midihdr.dwFlags)
-		//	midiOutPrepareHeader(g_hMidiStream, &midihdr, sizeof(midihdr));
-
-
-		if (midi_len > MAXWORD)
-			midi_len = 12* 5461;
-
-			memset(&midihdr, 0, sizeof(midihdr));
-		midihdr.lpData = midi;
-		midihdr.dwBufferLength = midi_len;
-		midihdr.dwBytesRecorded = midi_len;
-		int rc = midiOutPrepareHeader((HMIDIOUT )g_hMidiStream, &midihdr, sizeof(midihdr));
-		
-		rc = midiStreamOut(g_hMidiStream, &midihdr, sizeof(midihdr));
-		rc = midiStreamRestart(g_hMidiStream);
-		return 1;
-	}
-	else
-	{
+		MembufFree(&buf);
 		return 0;
 	}
+
+	if (buf.len > MAXWORD)
+		buf.len = 12 * 5461;
+
+	memset(&midihdr, 0, sizeof(midihdr));
+	midihdr.lpData = buf.data;
+	midihdr.dwBufferLength = buf.len;
+	midihdr.dwBytesRecorded = buf.len;
+	int rc = midiOutPrepareHeader(g_hMidiStream, &midihdr, sizeof(midihdr));
+
+	rc = midiStreamOut(g_hMidiStream, &midihdr, sizeof(midihdr));
+	rc = midiStreamRestart(g_hMidiStream);
+
+	return 1;
 }
 
 // Is the song playing?

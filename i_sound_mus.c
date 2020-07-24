@@ -82,16 +82,6 @@ typedef struct
 } MUSHeader;
 #pragma pack(pop)
 
-static const byte StaticMIDIhead[] =
-{ 'M','T','h','d', 0, 0, 0, 6,
-0, 0, // format 0: only one track
-0, 1, // yes, there is really only one track
-0, 70, // 70 divisions
-'M','T','r','k', 0, 0, 0, 0,
-// The first event sets the tempo to 500,000 microsec/quarter note
-0, 255, 81, 3, 0x07, 0xa1, 0x20
-};
-
 static const byte MUSMagic[4] = { 'M', 'U', 'S', 0x1a };
 
 static const byte CtrlTranslate[15] =
@@ -113,38 +103,6 @@ static const byte CtrlTranslate[15] =
 	121, // reset all controllers
 };
 
-typedef struct {
-	byte *data;
-	int len;
-	int nalloc;
-} Membuf;
-
-static void MembufInit(Membuf *buf, int prep)
-{
-	buf->data = malloc(prep);
-	buf->len = 0;
-	buf->nalloc = prep;
-}
-
-static void MembufPush(Membuf *buf, const byte *data, int len)
-{
-	int req = buf->len + len;
-	if (req > buf->nalloc)
-	{
-		buf->data = realloc(buf->data, buf->nalloc * 2);
-		buf->nalloc *= 2;
-	}
-
-	memcpy(&buf->data[buf->len], data, len);
-	buf->len += len;
-}
-
-static void MembufFree(Membuf *buf)
-{
-	free(buf->data);
-	buf->data = NULL;
-}
-
 static size_t ReadVarLen(const byte *buf, int *time_out)
 {
 	int time = 0;
@@ -163,7 +121,9 @@ static size_t ReadVarLen(const byte *buf, int *time_out)
 // We are on intel anyways
 #define LittleShort(a) (a)
 
-static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
+boolean I_MusRunMidiEvents(const byte *musBuf,
+                           MUSCALLBACK callback,
+                           void *context)
 {
 	byte midStatus, midArgs, mid1, mid2;
 	size_t mus_p, maxmus_p;
@@ -173,7 +133,6 @@ static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
 	byte status;
 	byte chanUsed[16];
 	byte lastVel[16];
-	long trackLen;
 	boolean no_op;
 	MIDIEVENT ev;
 
@@ -184,14 +143,12 @@ static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
 	if (LittleShort(musHead->NumChans) > 15)
 		return false;
 
-	// Prep for conversion
-	//MembufPush(out, StaticMIDIhead, sizeof(StaticMIDIhead));
+	// Send 'tempo' event
 	memset(&ev, 0, sizeof(ev));
 	ev.dwDeltaTime = 0;
 	ev.dwStreamID = 0;
 	ev.dwEvent = (0x01000000) | (60000000ULL/360);
-	MembufPush(out, &ev, 12);
-	
+	callback(&ev, context);
 
 	musBuf += LittleShort(musHead->SongStart);
 	maxmus_p = LittleShort(musHead->SongLen);
@@ -234,13 +191,7 @@ static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
 			ev.dwDeltaTime = 0;
 			ev.dwStreamID = 0;
 			ev.dwEvent = 0x007f07b0 | channel;
-			//byte data[4];
-			//data[0] = 0;
-			//data[1] = (0xB0 | channel);
-			//data[2] = 7;
-			//data[3] = 127;
-			//MembufPush(out, data, sizeof(data));
-			MembufPush(out, &ev, 12);
+			callback(&ev, context);
 		}
 
 		midStatus = channel;
@@ -326,23 +277,18 @@ static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
 		ev.dwDeltaTime = deltaTime;
 		ev.dwStreamID = 0;
 
-		//WriteVarLen(out, deltaTime);
-
 		if (midStatus != status)
 		{
 			status = midStatus;
-			//MembufPush(out, &status, 1);
 			ev.dwEvent |= status;
 		}
-		//MembufPush(out, &mid1, 1);
 		ev.dwEvent |= (mid1 << 8);
 		if (midArgs == 0)
 		{
-			//MembufPush(out, &mid2, 1);
 			ev.dwEvent |= (mid2 << 16);
 		}
 
-		MembufPush(out, &ev, sizeof(ev) - 4);
+		callback(&ev, context);
 
 		if (event & 128)
 		{
@@ -354,28 +300,5 @@ static boolean DoMus2Midi(const byte *musBuf, Membuf *out)
 		}
 	}
 
-	// fill in track length
-	trackLen = out->len - 22;
-	//out->data[18] = (byte)((trackLen >> 24) & 255);
-	//out->data[19] = (byte)((trackLen >> 16) & 255);
-	//out->data[20] = (byte)((trackLen >> 8) & 255);
-	//out->data[21] = (byte)(trackLen & 255);
 	return true;
-}
-
-boolean I_Mus2Midi(const byte *musBuf, byte **midi, int *midiLen)
-{
-	Membuf buf;
-	MembufInit(&buf, 32);
-	if (DoMus2Midi(musBuf, &buf))
-	{
-		*midi = buf.data;
-		*midiLen = buf.len;
-		return true;
-	}
-	else
-	{
-		MembufFree(&buf);
-		return false;
-	}
 }

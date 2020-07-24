@@ -2,4 +2,12 @@
 
 #include "doomtype.h"
 
-boolean I_Mus2Midi(const byte *musBuf, byte **midi, int *midiLen);
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <mmsystem.h>
+
+typedef void (* MUSCALLBACK)(MIDIEVENT *ev, void *ctx);
+
+boolean I_MusRunMidiEvents(const byte *musBuf,
+                           MUSCALLBACK callback,
+                           void *context);
