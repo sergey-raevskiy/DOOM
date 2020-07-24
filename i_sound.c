@@ -99,7 +99,7 @@ static int flag = 0;
 #define SAMPLECOUNT		512
 #define NUM_CHANNELS		8
 // It is 2 for 16bit, and 2 for two channels.
-#define BUFMUL                  4
+#define BUFMUL                  2
 #define MIXBUFFERSIZE		(SAMPLECOUNT*BUFMUL)
 
 #define SAMPLERATE		11025	// Hz
