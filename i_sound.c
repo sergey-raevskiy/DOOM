@@ -111,7 +111,7 @@ int 		lengths[NUMSFX];
 // The actual output device.
 static HWAVEOUT g_hWaveOut;
 static WAVEFORMAT *g_pWaveFormat;
-static WAVEHDR g_WaveHeader;
+static WAVEHDR g_WaveHeader[2];
 static HANDLE g_hWaveEvent;
 
 // The global mixing buffer.
@@ -654,7 +654,7 @@ void I_UpdateSound( void )
     
     if ( misses > 10 )
     {
-      fprintf( stderr, "I_SoundUpdate: missed 10 buffer writes\n");
+      //fprintf( stderr, "I_SoundUpdate: missed 10 buffer writes\n");
       misses = 0;
     }
     
@@ -684,22 +684,33 @@ I_SubmitSound(void)
     if (!g_hWaveOut)
         return;
 
-    WaitForSingleObject(g_hWaveEvent, INFINITE);
-    ResetEvent(g_hWaveEvent);
+	static int current = 0;
 
-    rc = waveOutWrite(g_hWaveOut, &g_WaveHeader, sizeof(g_WaveHeader));
-    if (rc)
-    {
-        fprintf(stderr, "I_SubmitSound: waveOutWrite() failed with error code %d\n", rc);
-        waveOutClose(g_hWaveOut);
-        g_hWaveOut = NULL;
-        return;
-    }
+	if (current >= _countof(g_WaveHeader))
+		current = 0;
 
-    //while (g_WaveHeader.dwFlags)
-    //{
-    //    WaitForSingleObject(g_hWaveEvent, INFINITE);
-    //}
+	for (int i = 0; i < _countof(mixbuffer); i++)
+	{
+		mixbuffer[i] = rand();
+	}
+
+	WAVEHDR *hdr = &g_WaveHeader[current++];
+	memcpy(hdr->lpData, mixbuffer, sizeof(mixbuffer));
+
+	while (!(hdr->dwFlags & WHDR_DONE));
+	//{
+	//	WaitForSingleObject(g_hWaveEvent, INFINITE);
+		//ResetEvent(g_hWaveEvent);
+	//}
+
+	rc = waveOutWrite(g_hWaveOut, hdr, sizeof(*hdr));
+	if (rc)
+	{
+		fprintf(stderr, "I_SubmitSound: waveOutWrite() failed with error code %d\n", rc);
+		waveOutClose(g_hWaveOut);
+		g_hWaveOut = NULL;
+		return;
+	}
 
     flag = 0;
 }
@@ -814,20 +825,27 @@ I_InitSound()
         return;
     }
 
-    memset(&g_WaveHeader, 0, sizeof(g_WaveHeader));
-    g_WaveHeader.lpData = mixbuffer;
-    g_WaveHeader.dwBufferLength = sizeof(mixbuffer);
-    g_WaveHeader.dwFlags = 0L;
-    g_WaveHeader.dwLoops = 0L;
+	for (int i = 0; i < _countof(g_WaveHeader); i++)
+	{
+		WAVEHDR *hdr = &g_WaveHeader[i];
 
-    rc = waveOutPrepareHeader(g_hWaveOut, &g_WaveHeader, sizeof(g_WaveHeader));
-    if (rc)
-    {
-        fprintf(stderr, "I_InitSound: waveOutPrepareHeader() failed with error code %d\n", rc);
-        waveOutClose(g_hWaveOut);
-        g_hWaveOut = NULL;
-        return;
-    }
+		memset(hdr, 0, sizeof(*hdr));
+		hdr->lpData = malloc(sizeof(mixbuffer));
+		hdr->dwBufferLength = sizeof(mixbuffer);
+		hdr->dwFlags = 0L;
+		hdr->dwLoops = 0L;
+
+		rc = waveOutPrepareHeader(g_hWaveOut, hdr, sizeof(*hdr));
+		if (rc)
+		{
+			fprintf(stderr, "I_InitSound: waveOutPrepareHeader() failed with error code %d\n", rc);
+			waveOutClose(g_hWaveOut);
+			g_hWaveOut = NULL;
+			return;
+		}
+
+		hdr->dwFlags |= WHDR_DONE;
+	}
 }
 
 
