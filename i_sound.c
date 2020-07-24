@@ -52,6 +52,7 @@ rcsid[] = "$Id: i_unix.c,v 1.5 1997/02/03 22:45:10 b1 Exp $";
 
 #include "i_system.h"
 #include "i_sound.h"
+#include "i_sound_mus.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "w_wad.h"
@@ -851,7 +852,7 @@ I_InitSound()
 
 
 
-static HMIDIOUT g_hMidiOut;
+static HMIDISTRM g_hMidiStream;
 
 //
 // MUSIC API.
@@ -860,22 +861,22 @@ static HMIDIOUT g_hMidiOut;
 //
 void I_InitMusic(void)
 {
-	MMRESULT rc;
+	MMRESULT rc = 0;
 
-	rc = midiOutOpen(&g_hMidiOut, 0, 0, 0, CALLBACK_NULL);
+	rc = midiStreamOpen(&g_hMidiStream, &rc, 1, 0, 0, CALLBACK_NULL);
 	if (rc)
 	{
-		fprintf(stderr, "I_InitMusic: midiOutOpen() failed: return code %d\n", rc);
-		g_hMidiOut = NULL;
+		fprintf(stderr, "I_InitMusic: midiStreamOpen() failed: return code %d\n", rc);
+		g_hMidiStream = NULL;
 		return;
 	}
 }
 
 void I_ShutdownMusic(void)
 {
-	if (g_hMidiOut)
+	if (g_hMidiStream)
 	{
-		midiOutClose(g_hMidiOut);
+		midiStreamClose(g_hMidiStream);
 	}
 }
 
@@ -906,6 +907,8 @@ void I_StopSong(int handle)
   // UNUSED.
   handle = 0;
   
+  midiStreamStop(g_hMidiStream);
+
   looping = 0;
   musicdies = 0;
 }
@@ -916,12 +919,38 @@ void I_UnRegisterSong(int handle)
   handle = 0;
 }
 
+static MIDIHDR midihdr = { 0 };
+
 int I_RegisterSong(void* data)
 {
-  // UNUSED.
-  data = NULL;
-  
-  return 1;
+	const byte *midi;
+	int midi_len;
+	if (I_Mus2Midi((const byte *)data, &midi, &midi_len))
+	{
+		//midi = (byte *) myNotes;
+		//midi_len = sizeof(myNotes);
+
+		//if (midihdr.dwFlags)
+		//	midiOutPrepareHeader(g_hMidiStream, &midihdr, sizeof(midihdr));
+
+
+		if (midi_len > MAXWORD)
+			midi_len = 12* 5461;
+
+			memset(&midihdr, 0, sizeof(midihdr));
+		midihdr.lpData = midi;
+		midihdr.dwBufferLength = midi_len;
+		midihdr.dwBytesRecorded = midi_len;
+		int rc = midiOutPrepareHeader((HMIDIOUT )g_hMidiStream, &midihdr, sizeof(midihdr));
+		
+		rc = midiStreamOut(g_hMidiStream, &midihdr, sizeof(midihdr));
+		rc = midiStreamRestart(g_hMidiStream);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 // Is the song playing?

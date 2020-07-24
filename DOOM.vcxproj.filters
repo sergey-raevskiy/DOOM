@@ -75,6 +75,7 @@
     <ClCompile Include="w_wad.c" />
     <ClCompile Include="wi_stuff.c" />
     <ClCompile Include="z_zone.c" />
+    <ClCompile Include="i_sound_mus.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="am_map.h" />
@@ -139,6 +140,7 @@
     <ClInclude Include="w_wad.h" />
     <ClInclude Include="wi_stuff.h" />
     <ClInclude Include="z_zone.h" />
+    <ClInclude Include="i_sound_mus.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="DOOMLIC.TXT" />
