@@ -833,13 +833,33 @@ I_InitSound()
 
 
 
+static HMIDIOUT g_hMidiOut;
+
 //
 // MUSIC API.
 // Still no music done.
 // Remains. Dummies.
 //
-void I_InitMusic(void)		{ }
-void I_ShutdownMusic(void)	{ }
+void I_InitMusic(void)
+{
+	MMRESULT rc;
+
+	rc = midiOutOpen(&g_hMidiOut, 0, 0, 0, CALLBACK_NULL);
+	if (rc)
+	{
+		fprintf(stderr, "I_InitMusic: midiOutOpen() failed: return code %d\n", rc);
+		g_hMidiOut = NULL;
+		return;
+	}
+}
+
+void I_ShutdownMusic(void)
+{
+	if (g_hMidiOut)
+	{
+		midiOutClose(g_hMidiOut);
+	}
+}
 
 static int	looping=0;
 static int	musicdies=-1;

@@ -105,6 +105,7 @@ void I_Init (void)
 {
     I_InitSound();
     //  I_InitGraphics();
+	I_InitMusic();
 }
 
 //
