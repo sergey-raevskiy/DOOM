@@ -691,7 +691,7 @@ I_SubmitSound(void)
 
 	for (int i = 0; i < _countof(mixbuffer); i++)
 	{
-		mixbuffer[i] = rand();
+		//mixbuffer[i] = rand();
 	}
 
 	WAVEHDR *hdr = &g_WaveHeader[current++];
