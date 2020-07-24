@@ -160,28 +160,6 @@ static size_t ReadVarLen(const byte *buf, int *time_out)
 	return ofs;
 }
 
-static size_t WriteVarLen(Membuf *buf, int time)
-{
-	long buffer;
-	size_t ofs;
-
-	buffer = time & 0x7f;
-	while ((time >>= 7) > 0)
-	{
-		buffer = (buffer << 8) | 0x80 | (time & 0x7f);
-	}
-	for (ofs = 0;;)
-	{
-		byte b = (byte)(buffer & 0xff);
-		MembufPush(buf, &b, 1);
-		if (buffer & 0x80)
-			buffer >>= 8;
-		else
-			break;
-	}
-	return ofs;
-}
-
 // We are on intel anyways
 #define LittleShort(a) (a)
 
