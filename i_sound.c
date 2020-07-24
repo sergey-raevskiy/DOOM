@@ -885,7 +885,7 @@ static int	musicdies=-1;
 
 void I_PlaySong(int handle, int looping)
 {
-  // UNUSED.
+	midiStreamRestart(g_hMidiStream);
   handle = looping = 0;
   musicdies = gametic + TICRATE*30;
 }
@@ -919,70 +919,96 @@ void I_UnRegisterSong(int handle)
   handle = 0;
 }
 
-static MIDIHDR midihdr = { 0 };
-
-
 typedef struct {
 	byte *data;
 	int len;
 	int nalloc;
-} Membuf;
 
-static void MembufInit(Membuf *buf, int prep)
+	int chunklen[64];
+	int chunk;
+	
+	MIDIHDR *midhdr;
+
+} SONG;
+
+static void SongInit(SONG *s)
 {
-	buf->data = malloc(prep);
-	buf->len = 0;
-	buf->nalloc = prep;
-}
+	s->nalloc = 32;
+	s->data = malloc(s->nalloc);
+	s->len = 0;
 
-static void MembufPush(Membuf *buf, const byte *data, int len)
-{
-	int req = buf->len + len;
-	if (req > buf->nalloc)
-	{
-		buf->data = realloc(buf->data, buf->nalloc * 2);
-		buf->nalloc *= 2;
-	}
-
-	memcpy(&buf->data[buf->len], data, len);
-	buf->len += len;
-}
-
-static void MembufFree(Membuf *buf)
-{
-	free(buf->data);
-	buf->data = NULL;
+	s->chunk = 0;
+	s->chunklen[0] = 0;
+	s->midhdr = NULL;
 }
 
 void MusCallback(MIDIEVENT *ev, void *context)
 {
-	Membuf *buf = context;
-	MembufPush(buf, ev, 12);
+	SONG *s = context;
+	int len = 12;
+	int req = s->len + len;
+
+	if ((s->chunklen[s->chunk] + len) > MAXWORD)
+	{
+		s->chunklen[++s->chunk] = 0;
+	}
+
+	if (req > s->nalloc)
+	{
+		s->data = realloc(s->data, s->nalloc * 2);
+		s->nalloc *= 2;
+	}
+
+	// Put event into bufer
+	memcpy(&s->data[s->len], ev, len);
+	s->len += len;
+	s->chunklen[s->chunk] += len;
 }
+
+SONG s;
 
 int I_RegisterSong(void* data)
 {
-	Membuf buf;
+	int rc;
 
-	MembufInit(&buf, 32);
+	SongInit(&s);
 
-	if (!I_MusRunMidiEvents((const byte *)data, MusCallback, &buf))
+	if (!I_MusRunMidiEvents((const byte *)data, MusCallback, &s))
 	{
-		MembufFree(&buf);
+		//MembufFree(&s);
 		return 0;
 	}
 
-	if (buf.len > MAXWORD)
-		buf.len = 12 * 5461;
+	s.midhdr = calloc(s.chunk + 1, sizeof(MIDIHDR));
+	byte *p = s.data;
 
-	memset(&midihdr, 0, sizeof(midihdr));
-	midihdr.lpData = buf.data;
-	midihdr.dwBufferLength = buf.len;
-	midihdr.dwBytesRecorded = buf.len;
-	int rc = midiOutPrepareHeader(g_hMidiStream, &midihdr, sizeof(midihdr));
+	for (int i = 0; i < (s.chunk + 1); i++)
+	{
+		MIDIHDR *h = &s.midhdr[i];
+		h->lpData = p;
+		h->dwBufferLength = s.chunklen[i];
+		h->dwBytesRecorded = s.chunklen[i];
+		p += s.chunklen[i];
+	}
 
-	rc = midiStreamOut(g_hMidiStream, &midihdr, sizeof(midihdr));
-	rc = midiStreamRestart(g_hMidiStream);
+	for (int i = 0; i < (s.chunk + 1); i++)
+	{
+		MIDIHDR *h = &s.midhdr[i];
+
+		rc = midiOutPrepareHeader(g_hMidiStream, h, sizeof(*h));
+		if (rc)
+		{
+			fprintf(stderr, "I_RegisterSong: midiOutPrepareHeader() failed with error code %d\n", rc);
+			return; // TODO: free
+		}
+
+		rc = midiStreamOut(g_hMidiStream, h, sizeof(*h));
+		if (rc)
+		{
+			fprintf(stderr, "I_RegisterSong: midiStreamOut() failed with error code %d\n", rc);
+			return; // TODO: free
+		}
+	}
 
 	return 1;
 }
