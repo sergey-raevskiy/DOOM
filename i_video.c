@@ -83,11 +83,9 @@ static COLORREF	colors[256];
 //  Translates the key currently in X_event
 //
 
-int xlatekey(void)
+int xlatekey(int rc)
 {
-    int rc;
-
-    switch(rc = X_Event.Event.KeyEvent.wVirtualKeyCode)
+    switch(rc)
     {
       case VK_LEFT:	rc = KEY_LEFTARROW;	break;
       case VK_RIGHT:	rc = KEY_RIGHTARROW;	break;
@@ -183,7 +181,7 @@ void I_GetEvent(void)
     {
       case KEY_EVENT:
 	event.type = X_Event.Event.KeyEvent.bKeyDown ? ev_keydown : ev_keyup;
-	event.data1 = xlatekey();
+	//event.data1 = xlatekey();
 	D_PostEvent(&event);
 	break;
 #if 0
@@ -285,16 +283,12 @@ createnullcursor
 //
 void I_StartTic (void)
 {
-	while (1)
+	MSG msg;
+
+	while (PeekMessage(&msg, g_MainWindow, 0, 0, PM_REMOVE))
 	{
-		DWORD count;
-
-		PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &X_Event, 1, &count);
-		if (count != 1)
-			break;
-
-		ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &X_Event, 1, &count);
-		I_GetEvent();
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
 	}
 
     // Warp the pointer back to the middle of the window
@@ -690,6 +684,27 @@ void grabsharedmemory(int size)
 }
 #endif
 
+static LRESULT CALLBACK MainWinProc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
+{
+	event_t event;
+
+	switch (msg)
+	{
+	case WM_KEYDOWN:
+		event.type = ev_keydown;
+        event.data1 = xlatekey(wp);
+        D_PostEvent(&event);
+		break;
+    case WM_KEYUP:
+        event.type = ev_keyup;
+        event.data1 = xlatekey(wp);
+        D_PostEvent(&event);
+        break;
+	}
+
+	return DefWindowProc(hw, msg, wp, lp);
+}
+
 void I_InitGraphics(void)
 {
     char*		displayname;
@@ -912,7 +927,37 @@ void I_InitGraphics(void)
 	screens[0] = (unsigned char *) malloc (SCREENWIDTH * SCREENHEIGHT);
 #endif
 
-	g_MainWindow = GetConsoleWindow();
+	WNDCLASS wc = { 0 };
+    wc.style = 0;
+    wc.lpfnWndProc = MainWinProc;
+    wc.cbClsExtra = wc.cbWndExtra = 0;
+    wc.hInstance = NULL;
+    wc.hIcon = NULL;
+    wc.hCursor = NULL;
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = L"Doom Main Windows Class";
+	if (!RegisterClass(&wc))
+	{
+		I_Error("RegisterClass() failed");
+	}
+
+	RECT sz;
+	sz.top = 0;
+	sz.left = 0;
+	sz.bottom = X_height;
+	sz.right = X_width;
+	AdjustWindowRect(&sz, WS_OVERLAPPEDWINDOW, FALSE);
+
+    g_MainWindow = CreateWindow(L"Doom Main Windows Class",
+                                L"DOOM",
+                                WS_OVERLAPPEDWINDOW,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                sz.right-sz.left, sz.bottom-sz.top,
+                                NULL, NULL, NULL, NULL);
+
+	ShowWindow(g_MainWindow, SW_SHOWNA);
+
 	g_MainWindowDC = GetDC(g_MainWindow);
     g_BitmapDC = CreateCompatibleDC(g_MainWindowDC);
     g_Bitmap = CreateCompatibleBitmap(g_MainWindowDC, SCREENWIDTH, SCREENHEIGHT);
