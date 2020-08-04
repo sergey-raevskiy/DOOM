@@ -161,6 +161,7 @@ boolean		shmFinished;
 
 void I_GetEvent(void)
 {
+#if 0
     event_t event;
 
     // put event-grabbing stuff in here
@@ -171,7 +172,6 @@ void I_GetEvent(void)
 	//event.data1 = xlatekey();
 	D_PostEvent(&event);
 	break;
-#if 0
       case ButtonPress:
 	event.type = ev_mouse;
 	event.data1 =
