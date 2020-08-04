@@ -230,12 +230,12 @@ void I_GetEvent(void)
       case Expose:
       case ConfigureNotify:
 	break;
-#endif
 	
       default:
 	//XXXif (doShm && X_event.type == X_shmeventtype) shmFinished = true;
 	break;
     }
+#endif
 }
 
 //
