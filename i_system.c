@@ -119,6 +119,8 @@ void I_Quit (void)
     M_SaveDefaults ();
     I_ShutdownGraphics();
 
+	byte endoomData[80 * 25 * 2];
+
 int endoom = W_GetNumForName("ENDOOM");
 	if (W_LumpLength(endoom)!=sizeof(endoomData))
 		I_Error("I_Endoom(): ivalid ENDOOM resource");
