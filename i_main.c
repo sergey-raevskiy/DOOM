@@ -39,6 +39,8 @@ main
     myargc = argc; 
     myargv = argv; 
  
+    I_InitVideo();
+
     D_DoomMain (); 
 
     return 0;

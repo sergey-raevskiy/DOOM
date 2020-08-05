@@ -30,6 +30,7 @@
 #pragma interface
 #endif
 
+void I_InitVideo();
 
 // Called by D_DoomMain,
 // determines the hardware configuration

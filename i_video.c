@@ -411,6 +411,44 @@ static LRESULT CALLBACK MainWinProc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
 	return DefWindowProc(hw, msg, wp, lp);
 }
 
+void I_InitVideo()
+{
+	WNDCLASS wc = { 0 };
+    wc.style = 0;
+    wc.lpfnWndProc = MainWinProc;
+    wc.cbClsExtra = wc.cbWndExtra = 0;
+    wc.hInstance = NULL;
+    wc.hIcon = NULL;
+    wc.hCursor = NULL;
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName = NULL;
+    wc.lpszClassName = L"Doom Main Windows Class";
+	if (!RegisterClass(&wc))
+	{
+		I_Error("RegisterClass() failed");
+	}
+
+	RECT sz;
+	sz.top = 0;
+	sz.left = 0;
+	sz.bottom = 400;
+	sz.right = 640;
+	AdjustWindowRect(&sz, WS_OVERLAPPEDWINDOW, FALSE);
+
+    g_MainWindow = CreateWindow(L"Doom Main Windows Class",
+                                L"DOOM",
+                                WS_OVERLAPPEDWINDOW,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                sz.right-sz.left, sz.bottom-sz.top,
+                                NULL, NULL, NULL, NULL);
+
+	ShowWindow(g_MainWindow, SW_SHOWNA);
+
+	g_MainWindowDC = GetDC(g_MainWindow);
+    g_BitmapDC = CreateCompatibleDC(g_MainWindowDC);
+    g_Bitmap = CreateCompatibleBitmap(g_MainWindowDC, SCREENWIDTH, SCREENHEIGHT);
+}
+
 void I_InitGraphics(void)
 {
     char*		displayname;
@@ -474,39 +512,4 @@ void I_InitGraphics(void)
 	else
 	    I_Error("bad -geom parameter");
     }
-
-	WNDCLASS wc = { 0 };
-    wc.style = 0;
-    wc.lpfnWndProc = MainWinProc;
-    wc.cbClsExtra = wc.cbWndExtra = 0;
-    wc.hInstance = NULL;
-    wc.hIcon = NULL;
-    wc.hCursor = NULL;
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = NULL;
-    wc.lpszClassName = L"Doom Main Windows Class";
-	if (!RegisterClass(&wc))
-	{
-		I_Error("RegisterClass() failed");
-	}
-
-	RECT sz;
-	sz.top = 0;
-	sz.left = 0;
-	sz.bottom = X_height;
-	sz.right = X_width;
-	AdjustWindowRect(&sz, WS_OVERLAPPEDWINDOW, FALSE);
-
-    g_MainWindow = CreateWindow(L"Doom Main Windows Class",
-                                L"DOOM",
-                                WS_OVERLAPPEDWINDOW,
-                                CW_USEDEFAULT, CW_USEDEFAULT,
-                                sz.right-sz.left, sz.bottom-sz.top,
-                                NULL, NULL, NULL, NULL);
-
-	ShowWindow(g_MainWindow, SW_SHOWNA);
-
-	g_MainWindowDC = GetDC(g_MainWindow);
-    g_BitmapDC = CreateCompatibleDC(g_MainWindowDC);
-    g_Bitmap = CreateCompatibleBitmap(g_MainWindowDC, SCREENWIDTH, SCREENHEIGHT);
 }
