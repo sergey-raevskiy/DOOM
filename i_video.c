@@ -419,6 +419,10 @@ static LRESULT CALLBACK MainWinProc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
         event.data1 = xlatekey(wp);
         D_PostEvent(&event);
         break;
+    case WM_CLOSE:
+        event.type = ev_quit;
+        D_PostEvent(&event);
+        break;
 	}
 
 	return DefWindowProc(hw, msg, wp, lp);

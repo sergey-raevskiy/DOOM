@@ -1442,6 +1442,10 @@ boolean M_Responder (event_t* ev)
 	    {
 		ch = ev->data1;
 	    }
+		else if (ev->type == ev_quit)
+		{
+			I_Quit();
+		}
     }
     
     if (ch == -1)
