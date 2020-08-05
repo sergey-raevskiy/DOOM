@@ -198,11 +198,6 @@ void I_Error (char *error, ...)
 void dprintf(const char *fmt, ...)
 {
 	va_list	argptr;
-
-	va_start(argptr, fmt);
-	vfprintf(stdout, fmt, argptr);
-	va_end(argptr);
-
 	char buf[1024];
 
 	va_start(argptr, fmt);
