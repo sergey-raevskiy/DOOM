@@ -120,8 +120,9 @@ void I_Quit (void)
     I_ShutdownGraphics();
 
 int endoom = W_GetNumForName("ENDOOM");
-	int len = W_LumpLength(endoom);
-	byte *endoomData = malloc(len);
+	if (W_LumpLength(endoom)!=sizeof(endoomData))
+		I_Error("I_Endoom(): ivalid ENDOOM resource");
+
 	W_ReadLump(endoom, endoomData);
 	for (int i = 0;i < 25;i++)
 	{
