@@ -445,11 +445,26 @@ void I_InitVideo()
 		I_Error("RegisterClass() failed");
 	}
 
+    if (M_CheckParm("-1"))
+        multiply = 1;
+
+    if (M_CheckParm("-2"))
+        multiply = 2;
+
+    if (M_CheckParm("-3"))
+        multiply = 3;
+
+    if (M_CheckParm("-4"))
+        multiply = 4;
+
+    X_width = SCREENWIDTH * multiply;
+    X_height = SCREENHEIGHT * multiply;
+
 	RECT sz;
 	sz.top = 0;
 	sz.left = 0;
-	sz.bottom = 400;
-	sz.right = 640;
+	sz.bottom = X_height;
+	sz.right = X_width;
 	AdjustWindowRect(&sz, WS_OVERLAPPEDWINDOW, FALSE);
 
     g_MainWindow = CreateWindow(L"Doom Main Windows Class",
@@ -540,7 +555,7 @@ void I_TextFlush()
 
     HBITMAP old = SelectObject(g_BitmapDC, g_TextModeBitmap);
     StretchBlt(g_MainWindowDC,
-               0, 0, TEXTSCREENPXWIDTH, TEXTSCREENPXHEIGHT,
+               0, 0, X_width, X_height,
                g_BitmapDC, 0, 0,
                TEXTSCREENPXWIDTH, TEXTSCREENPXHEIGHT, SRCCOPY);
 	SelectObject(g_BitmapDC, old);
