@@ -43,6 +43,8 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 #endif
 #include "i_system.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 
 
@@ -76,8 +78,6 @@ byte* I_ZoneBase (int*	size)
     *size = mb_used*1024*1024;
     return (byte *) malloc (*size);
 }
-
-__declspec(dllimport) unsigned __int64 __stdcall GetTickCount64();
 
 //
 // I_GetTime
