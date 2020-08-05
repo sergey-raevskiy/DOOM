@@ -118,7 +118,22 @@ void I_Quit (void)
     I_ShutdownMusic();
     M_SaveDefaults ();
     I_ShutdownGraphics();
-    exit(0);
+
+int endoom = W_GetNumForName("ENDOOM");
+	int len = W_LumpLength(endoom);
+	byte *endoomData = malloc(len);
+	W_ReadLump(endoom, endoomData);
+	for (int i = 0;i < 25;i++)
+	{
+		for (int j = 0; j < 80; j++)
+		{
+			I_TextSetAt(j, i, endoomData[(i * 80 + j)*2+0], endoomData[(i * 80 + j) * 2 + 1]);
+		}
+	}
+
+	I_TextFlush();
+
+	for (;;);
 }
 
 void I_WaitVBL(int count)
