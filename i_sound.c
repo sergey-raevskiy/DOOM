@@ -179,8 +179,8 @@ myioctl
     rc = 0;
     if (rc < 0)
     {
-	fprintf(stderr, "ioctl(dsp,%d,arg) failed\n", command);
-	fprintf(stderr, "errno=%d\n", errno);
+	dprintf("ioctl(dsp,%d,arg) failed\n", command);
+	dprintf("errno=%d\n", errno);
 	exit(-1);
     }
 }
@@ -707,7 +707,7 @@ I_SubmitSound(void)
 	rc = waveOutWrite(g_hWaveOut, hdr, sizeof(*hdr));
 	if (rc)
 	{
-		fprintf(stderr, "I_SubmitSound: waveOutWrite() failed with error code %d\n", rc);
+		dprintf("I_SubmitSound: waveOutWrite() failed with error code %d\n", rc);
 		waveOutClose(g_hWaveOut);
 		g_hWaveOut = NULL;
 		return;
@@ -790,7 +790,7 @@ I_InitSound()
     g_hWaveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!g_hWaveEvent)
     {
-        fprintf(stderr, "I_InitSound: CreateEvent() failed: return code %d\n", GetLastError());
+        dprintf("I_InitSound: CreateEvent() failed: return code %d\n", GetLastError());
         g_hWaveOut = NULL;
         return;
     }
@@ -812,7 +812,7 @@ I_InitSound()
 
     if (rc)
     {
-        fprintf(stderr, "I_InitSound: waveOutOpen() failed: return code %d\n", rc);
+        dprintf("I_InitSound: waveOutOpen() failed: return code %d\n", rc);
         g_hWaveOut = NULL;
         return;
     }
@@ -820,7 +820,7 @@ I_InitSound()
     rc = waveOutSetVolume(g_hWaveOut, 0xFFFFFFFF);
     if (rc)
     {
-        fprintf(stderr, "I_InitSound: waveOutSetVolume() failed with error code %d\n", rc);
+        dprintf("I_InitSound: waveOutSetVolume() failed with error code %d\n", rc);
         waveOutClose(g_hWaveOut);
         g_hWaveOut = NULL;
         return;
@@ -839,7 +839,7 @@ I_InitSound()
 		rc = waveOutPrepareHeader(g_hWaveOut, hdr, sizeof(*hdr));
 		if (rc)
 		{
-			fprintf(stderr, "I_InitSound: waveOutPrepareHeader() failed with error code %d\n", rc);
+			dprintf("I_InitSound: waveOutPrepareHeader() failed with error code %d\n", rc);
 			waveOutClose(g_hWaveOut);
 			g_hWaveOut = NULL;
 			return;
@@ -866,7 +866,7 @@ void I_InitMusic(void)
 	rc = midiStreamOpen(&g_hMidiStream, &rc, 1, 0, 0, CALLBACK_NULL);
 	if (rc)
 	{
-		fprintf(stderr, "I_InitMusic: midiStreamOpen() failed: return code %d\n", rc);
+		dprintf("I_InitMusic: midiStreamOpen() failed: return code %d\n", rc);
 		g_hMidiStream = NULL;
 		return;
 	}
@@ -998,14 +998,14 @@ int I_RegisterSong(void* data)
 		rc = midiOutPrepareHeader(g_hMidiStream, h, sizeof(*h));
 		if (rc)
 		{
-			fprintf(stderr, "I_RegisterSong: midiOutPrepareHeader() failed with error code %d\n", rc);
+			dprintf("I_RegisterSong: midiOutPrepareHeader() failed with error code %d\n", rc);
 			return; // TODO: free
 		}
 
 		rc = midiStreamOut(g_hMidiStream, h, sizeof(*h));
 		if (rc)
 		{
-			fprintf(stderr, "I_RegisterSong: midiStreamOut() failed with error code %d\n", rc);
+			dprintf("I_RegisterSong: midiStreamOut() failed with error code %d\n", rc);
 			return; // TODO: free
 		}
 	}

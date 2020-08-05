@@ -279,12 +279,12 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     { 
 	if (gamekeydown[key_right]) 
 	{
-	    // fprintf(stderr, "strafe right\n");
+	    // dprintf( "strafe right\n");
 	    side += sidemove[speed]; 
 	}
 	if (gamekeydown[key_left]) 
 	{
-	    //	fprintf(stderr, "strafe left\n");
+	    //	dprintf( "strafe left\n");
 	    side -= sidemove[speed]; 
 	}
 	if (joyxmove > 0) 
@@ -307,12 +307,12 @@ void G_BuildTiccmd (ticcmd_t* cmd)
  
     if (gamekeydown[key_up]) 
     {
-	// fprintf(stderr, "up\n");
+	// dprintf( "up\n");
 	forward += forwardmove[speed]; 
     }
     if (gamekeydown[key_down]) 
     {
-	// fprintf(stderr, "down\n");
+	// dprintf( "down\n");
 	forward -= forwardmove[speed]; 
     }
     if (joyymove < 0) 

@@ -424,7 +424,7 @@ S_StartSound
     {
 	for (i=first_saw;i!=next_saw;i=(i+1)%10)
 	    if (last_saw_origins[i] != origin)
-		fprintf(stderr, "old origin 0x%lx != "
+		dprintf("old origin 0x%lx != "
 			"origin 0x%lx for sfx %d\n",
 			last_saw_origins[i],
 			origin,
@@ -450,7 +450,7 @@ S_StartSound
 		    || channels[i].sfxinfo == &S_sfx[sfx_sawful]
 		    || channels[i].sfxinfo == &S_sfx[sfx_sawhit])
 		{
-		    fprintf(stderr,
+		    dprintf(
 			    "chn: sfxinfo=0x%lx, origin=0x%lx, "
 			    "handle=%d\n",
 			    channels[i].sfxinfo,
@@ -458,7 +458,7 @@ S_StartSound
 			    channels[i].handle);
 		}
 	    }
-	    fprintf(stderr, "\n");
+	    dprintf("\n");
 	}
     }
 }
@@ -719,7 +719,7 @@ void S_StopChannel(int cnum)
 	{
 #ifdef SAWDEBUG
 	    if (c->sfxinfo == &S_sfx[sfx_sawful])
-		fprintf(stderr, "stopped\n");
+		dprintf("stopped\n");
 #endif
 	    I_StopSound(c->handle);
 	}

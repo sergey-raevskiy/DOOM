@@ -32,6 +32,9 @@
 
 void I_InitVideo();
 
+void I_TextSetAt(int x, int y, byte ch, byte attr);
+void I_TextFlush();
+
 // Called by D_DoomMain,
 // determines the hardware configuration
 // and sets up the video mode

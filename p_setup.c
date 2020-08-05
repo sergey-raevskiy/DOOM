@@ -688,7 +688,7 @@ P_SetupLevel
     if (precache)
 	R_PrecacheLevel ();
 
-    //printf ("free memory: 0x%x\n", Z_FreeMemory());
+    //dprintf ("free memory: 0x%x\n", Z_FreeMemory());
 
 }
 

@@ -88,6 +88,9 @@ void I_Tactile (int on, int off, int total);
 
 void I_Error (char *error, ...);
 
+// Use instead of dprintf()
+void dprintf(const char *fmt, ...);
+
 
 #endif
 //-----------------------------------------------------------------------------

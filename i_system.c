@@ -179,3 +179,45 @@ void I_Error (char *error, ...)
     
     exit(-1);
 }
+
+void dprintf(const char *fmt, ...)
+{
+	va_list	argptr;
+
+	va_start(argptr, fmt);
+	vfprintf(stdout, fmt, argptr);
+	va_end(argptr);
+
+	char buf[1024];
+
+	va_start(argptr, fmt);
+	vsprintf(buf, fmt, argptr);
+	va_end(argptr);
+
+	static int x = 0;
+	static int y = 0;
+	static byte attr = 7;
+
+	char *p = buf;
+	while (*p)
+	{
+		if (*p == '\n')
+			x = 0, y++;
+		else if (*p == 8)
+		{
+			if (x > 0)
+				x--;
+		}
+		else {
+			I_TextSetAt(x, y, *p, attr);
+			x++;
+			if (x >= 80)
+				y++, x = 0;
+		}
+		if (y >= 25)
+			y = 0;//kek
+		p++;
+	}
+
+	I_TextFlush();
+}
