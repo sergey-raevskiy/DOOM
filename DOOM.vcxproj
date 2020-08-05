@@ -214,6 +214,7 @@
     <ClCompile Include="st_stuff.c" />
     <ClCompile Include="s_sound.c" />
     <ClCompile Include="tables.c" />
+    <ClCompile Include="vga_fonts.c" />
     <ClCompile Include="v_video.c" />
     <ClCompile Include="wi_stuff.c" />
     <ClCompile Include="w_wad.c" />
@@ -279,6 +280,7 @@
     <ClInclude Include="st_stuff.h" />
     <ClInclude Include="s_sound.h" />
     <ClInclude Include="tables.h" />
+    <ClInclude Include="vga_fonts.h" />
     <ClInclude Include="v_video.h" />
     <ClInclude Include="wi_stuff.h" />
     <ClInclude Include="w_wad.h" />
